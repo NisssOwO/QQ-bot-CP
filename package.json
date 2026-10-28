@@ -1,0 +1,20 @@
+{
+  "name": "shiny-colors-official-qqbot-migration",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "dsh": "dsh --profile qqbot",
+    "install-plugin": "dsh plugin --profile qqbot add @tencent-connect/dsh-qqbot@0.5.2",
+    "preflight": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\preflight-p0.ps1",
+    "validate:offline": "node .\\validate-presets.mjs && node .\\runtime\\test-role-preset-service.mjs",
+    "verify:secrets": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\verify-local-secrets.ps1",
+    "test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\run-offline-tests.ps1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh": "0.2.1-rc.2",
+    "@tencent-connect/dsh-qqbot": "0.5.2"
+  }
+}
