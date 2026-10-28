@@ -125,5 +125,11 @@ public final class MainActivity extends Activity {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             clipboard.setPrimaryClip(ClipData.newPlainText("QQ 会话指令", value));
         }
+
+        @JavascriptInterface public String checkUpdate() { return UpdateChecker.check(); }
+
+        @JavascriptInterface public void openRelease(String url) {
+            UpdateChecker.openRelease(MainActivity.this, url);
+        }
     }
 }

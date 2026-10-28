@@ -60,8 +60,10 @@
       <section class="card"><div class="role"><div><b>密钥存储</b><small>AppSecret 和 API Key 使用 Android Keystore 加密</small></div><span class="tag">安全</span></div><button class="save" style="margin-top:14px" onclick="toast('打开凭据管理')">查看配置状态</button></section>
       <div class="section"><h2>后台运行</h2></div>
       <section class="card"><div class="role"><div><b>锁屏后继续运行</b><small>使用前台服务保持消息接收</small></div><span class="tag">开启</span></div><div class="role" style="margin-top:16px"><div><b>通知提醒</b><small>只显示连接和错误状态</small></div><span class="tag">低打扰</span></div></section>
+      <div class="section"><h2>软件更新</h2><a href="https://github.com/NisssOwO/QQ-bot-CP/releases" target="_blank">Release</a></div>
+      <section class="card"><div class="role"><div><b>QQ-bot-CP</b><small id="updateHint">当前版本 · 检查 GitHub Release</small></div><span class="tag" id="updateTag">v0.2.3</span></div><button class="save" style="margin-top:14px" onclick="checkUpdate()">检查更新</button></section>
       <div class="section"><h2>应用信息</h2></div>
-      <section class="card"><div class="field"><label>运行环境</label><input value="Android · arm64-v8a" readonly></div><div class="field"><label>运行时版本</label><input value="Node 26 · DSH v0.2.1" readonly></div><button class="save" onclick="toast('数据管理即将打开')">备份配置与角色卡</button></section>
+      <section class="card"><div class="field"><label>运行环境</label><input value="Android · arm64-v8a" readonly></div><div class="field"><label>软件版本</label><input value="QQ-bot-CP v0.2.3 · Node 26 · DSH v0.2.1" readonly></div><button class="save" onclick="toast('数据管理即将打开')">备份配置与角色卡</button></section>
       </div>
     </div>
   </main>
@@ -85,6 +87,7 @@
     function importRole(){try{let r=JSON.parse(roleImportJson.value);let ok=bridge.saveRole(JSON.stringify(r));if(!ok)throw Error();editingRoleId=r.id;loadRoles();editRole(r.id);roleImportJson.value='';toast('角色卡已导入')}catch{toast('导入失败，请检查 JSON 和 custom. ID')}}
     function saveRoleScope(){let ok=bridge.saveRoleScope(privateRole.value,groupRole.value);toast(ok?'私聊/群聊角色范围已保存':'角色范围保存失败')}
     function copyText(text){try{bridge.copy(text);toast('已复制：'+text)}catch{toast('复制失败，请长按指令')}}
+    function checkUpdate(){let raw='';try{raw=bridge.checkUpdate()}catch{toast('更新检查不可用');return}try{let u=JSON.parse(raw);if(!u.ok){updateHint.textContent='检查失败：'+(u.error||'网络不可用');toast('暂时无法检查更新');return}updateTag.textContent='v'+u.latestVersion;updateHint.textContent=u.hasUpdate?'发现新版本 · 点击版本号打开 Release':'已是最新版本';updateTag.onclick=()=>bridge.openRelease(u.url);updateTag.style.cursor='pointer';toast(u.hasUpdate?'发现新版本':'当前已是最新版本')}catch{toast('更新信息解析失败')}}
     loadRoles();refresh();setInterval(refresh,3000);
   </script>
 </body>

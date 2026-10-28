@@ -11,7 +11,7 @@ final class RuntimeAssetInstaller {
 
     static File install(Context context) throws IOException {
         File target = new File(context.getFilesDir(), "runtime");
-        String version = "node26-bundle-v19";
+        String version = "node26-bundle-v20";
         if (!version.equals(context.getSharedPreferences("runtime", Context.MODE_PRIVATE).getString("assetVersion", ""))) {
             deleteTree(target);
             context.getSharedPreferences("runtime", Context.MODE_PRIVATE).edit().putString("assetVersion", version).remove("runtimeInstallError").apply();
@@ -56,4 +56,5 @@ final class RuntimeAssetInstaller {
         }
     }
 }
+
 
