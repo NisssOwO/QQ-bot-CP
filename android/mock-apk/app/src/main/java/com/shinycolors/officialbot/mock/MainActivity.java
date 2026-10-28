@@ -29,6 +29,11 @@ public final class MainActivity extends Activity {
         web.addJavascriptInterface(new UiBridge(), "AndroidBridge");
         setContentView(web);
         web.loadUrl("file:///android_asset/ui/index.html");
+        CredentialStore store = new CredentialStore(this);
+        if (store.has("qqbotAppId") && store.has("qqbotSecret") && store.has("llmApiKey")) {
+            new Handler(Looper.getMainLooper()).postDelayed(() ->
+                    startForegroundService(new Intent(MainActivity.this, BotRuntimeService.class)), 350L);
+        }
     }
 
     private final class UiBridge {
@@ -36,7 +41,7 @@ public final class MainActivity extends Activity {
             android.content.SharedPreferences p = getSharedPreferences(BotRuntimeService.PREFS, MODE_PRIVATE);
             try {
                 JSONObject out = new JSONObject();
-                out.put("running", p.getBoolean("running", false));
+                out.put("running", p.getBoolean("runtimeProcessAlive", false));
                 out.put("port", p.getInt("port", 0));
                 out.put("token", p.getString("token", ""));
                 out.put("lastOutput", p.getString("runtimeLastOutput", ""));

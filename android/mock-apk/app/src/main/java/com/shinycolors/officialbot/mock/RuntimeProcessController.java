@@ -32,6 +32,8 @@ final class RuntimeProcessController {
         env.put("SHINY_NODE_BIN", node.getAbsolutePath());
         env.put("LD_LIBRARY_PATH", context.getApplicationInfo().nativeLibraryDir);
         process = builder.start();
+        context.getSharedPreferences(BotRuntimeService.PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean("runtimeProcessAlive", true).putBoolean("running", true).apply();
         Thread watcher = new Thread(() -> {
             try (java.io.BufferedReader errors = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()))) {
                 String line;
@@ -41,7 +43,8 @@ final class RuntimeProcessController {
             } catch (IOException ignored) { }
             try {
                 int exit = process.waitFor();
-                context.getSharedPreferences(BotRuntimeService.PREFS, Context.MODE_PRIVATE).edit().putInt("runtimeExitCode", exit).apply();
+                context.getSharedPreferences(BotRuntimeService.PREFS, Context.MODE_PRIVATE).edit()
+                        .putInt("runtimeExitCode", exit).putBoolean("runtimeProcessAlive", false).putBoolean("running", false).apply();
             } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
         }, "runtime-process-watcher");
         Thread output = new Thread(() -> {
@@ -75,6 +78,8 @@ final class RuntimeProcessController {
     synchronized void stop() {
         if (process != null) process.destroy();
         process = null;
+        context.getSharedPreferences(BotRuntimeService.PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean("runtimeProcessAlive", false).putBoolean("running", false).apply();
     }
 
     synchronized boolean isRunning() { return process != null && process.isAlive(); }

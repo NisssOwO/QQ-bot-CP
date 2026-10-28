@@ -26,13 +26,25 @@ if (Test-Path $sourceDeepseek) {
   New-Item -ItemType Directory -Force $targetDeepseek | Out-Null
   Copy-Item (Join-Path $sourceDeepseek '*') $targetDeepseek -Recurse -Force
 }
-$extraPackages = @('@opentelemetry/api-logs', '@opentelemetry/core', '@opentelemetry/resources', '@earendil-works/pi-ai', '@earendil-works/pi-telemetry', '@joplin/turndown-plugin-gfm', '@mixmark-io/domino', 'diff', 'ipaddr.js', 'turndown', 'eventsource-parser', 'execa', 'yocto-queue', 'is-plain-obj')
+$extraPackages = @('@opentelemetry/sdk-logs', '@opentelemetry/api-logs', '@opentelemetry/core', '@opentelemetry/resources', '@earendil-works/pi-ai', '@earendil-works/pi-telemetry', '@joplin/turndown-plugin-gfm', '@mixmark-io/domino', 'diff', 'ipaddr.js', 'turndown', 'eventsource-parser', 'execa', 'yocto-queue', 'is-plain-obj')
 foreach ($packageName in $extraPackages) {
   $sourcePackage = Join-Path $env:SHINY_RUNTIME_SOURCE $packageName
   $targetPackage = Join-Path $assets "node_modules\$packageName"
   if (Test-Path $sourcePackage) {
     New-Item -ItemType Directory -Force (Split-Path $targetPackage) | Out-Null
     Copy-Item $sourcePackage $targetPackage -Recurse -Force
+  }
+}
+# Some DSH packages resolve OpenTelemetry from nested dependency roots.
+$nestedOtelRoots = @(
+  (Join-Path $assets 'node_modules\@deepseek-ai\dsh-base\node_modules\@opentelemetry'),
+  (Join-Path $assets 'node_modules\@deepseek-ai\dsh-session-telemetry-otel\node_modules\@opentelemetry')
+)
+foreach ($nestedRoot in $nestedOtelRoots) {
+  $sourceSdkLogs = Join-Path $env:SHINY_RUNTIME_SOURCE '@opentelemetry\sdk-logs'
+  if (Test-Path $sourceSdkLogs) {
+    New-Item -ItemType Directory -Force $nestedRoot | Out-Null
+    Copy-Item $sourceSdkLogs (Join-Path $nestedRoot 'sdk-logs') -Recurse -Force
   }
 }
 $piCompletions = Join-Path $assets 'node_modules\@earendil-works\pi-ai\dist\api\openai-completions.js'
