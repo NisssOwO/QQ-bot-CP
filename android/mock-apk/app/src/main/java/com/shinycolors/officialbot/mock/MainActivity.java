@@ -5,6 +5,8 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -64,6 +66,13 @@ public final class MainActivity extends Activity {
 
         @JavascriptInterface public void start() { runOnUiThread(() -> startForegroundService(new Intent(MainActivity.this, BotRuntimeService.class))); }
         @JavascriptInterface public void stop() { runOnUiThread(() -> stopService(new Intent(MainActivity.this, BotRuntimeService.class))); }
+        @JavascriptInterface public void restart() {
+            runOnUiThread(() -> {
+                Intent intent = new Intent(MainActivity.this, BotRuntimeService.class);
+                stopService(intent);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> startForegroundService(intent), 1400L);
+            });
+        }
 
         @JavascriptInterface public boolean saveConfig(String raw) {
             try {
@@ -117,7 +126,7 @@ public final class MainActivity extends Activity {
             getSharedPreferences("public-config", MODE_PRIVATE).edit()
                     .putString("privateRole", privateRole == null ? "" : privateRole)
                     .putString("groupRole", groupRole == null ? "" : groupRole)
-                    .apply();
+                    .commit();
             return true;
         }
 
@@ -133,3 +142,4 @@ public final class MainActivity extends Activity {
         }
     }
 }
+

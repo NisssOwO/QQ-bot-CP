@@ -72,12 +72,12 @@
     function showView(name,button){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelector('#view-'+name).classList.add('active');document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));button.classList.add('active');window.scrollTo({top:0,behavior:'smooth'})}
     const bridge=window.AndroidBridge;
     function toast(text){let el=document.createElement('div');el.textContent=text;Object.assign(el.style,{position:'fixed',left:'50%',bottom:'88px',transform:'translateX(-50%)',background:'#edf1ff',color:'#111522',padding:'10px 15px',borderRadius:'12px',fontSize:'13px',zIndex:9});document.body.append(el);setTimeout(()=>el.remove(),1600)}
-    function refresh(){let s={};try{s=JSON.parse(bridge.state())}catch{};document.querySelector('#runState').textContent=s.running?'运行中':'已停止';document.querySelector('#runHint').textContent=s.running?'QQ 网关已连接 · 消息链路正常':(s.lastError?'需要检查 Runtime 日志':'等待 Runtime 启动');let c={};try{c=JSON.parse(bridge.config())}catch{};if(c.privateRole)privateRole.value=c.privateRole;if(c.groupRole)groupRole.value=c.groupRole;}
-    function restartBot(){bridge.stop();setTimeout(()=>bridge.start(),500);toast('Runtime 正在重启')}
+    function refresh(){let s={};try{s=JSON.parse(bridge.state())}catch{};document.querySelector('#runState').textContent=s.running?'运行中':'已停止';document.querySelector('#runHint').textContent=s.running?'QQ 网关已连接 · 消息链路正常':(s.lastError?'需要检查 Runtime 日志':'等待 Runtime 启动');let c={};try{c=JSON.parse(bridge.config())}catch{};if(!scopeDirty){if(c.privateRole)document.getElementById('privateRole').value=c.privateRole;if(c.groupRole)document.getElementById('groupRole').value=c.groupRole;}}
+    function restartBot(){try{bridge.restart();toast('Runtime 正在重启，等待连接恢复')}catch{bridge.stop();setTimeout(()=>bridge.start(),1800);toast('Runtime 正在重启')}}
     function saveConfig(){let ok=bridge.saveConfig(JSON.stringify({appId:appId.value,secret:secret.value,apiKey:apiKey.value,model:model.value,baseUrl:baseUrl.value,provider:'relay'}));secret.value='';apiKey.value='';toast(ok?'配置已保存，重启后生效':'配置保存失败')}
-    let roleData=[];let editingRoleId='';
+    let roleData=[];let editingRoleId='';let scopeDirty=false;
     function esc(v){return String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]))}
-    function loadRoles(){try{roleData=JSON.parse(bridge.roles()||'[]')}catch{roleData=[]}let list=document.querySelector('#roleList');list.innerHTML=roleData.map(r=>`<section class="card role"><div class="avatar">${r.builtin?'✦':'✎'}</div><div><b>${esc(r.displayName)}</b><small>${esc(r.id)}</small></div><span class="tag">${r.builtin?'内置':'自定义'}</span><div class="role-actions"><button class="outline" onclick="editRole('${esc(r.id)}')">编辑</button>${r.builtin?'':'<button class="danger" onclick="removeRole(\''+esc(r.id)+'\')">删除</button>'}</div></section>`).join('')||'<section class="card muted">还没有自定义角色，点击右上角新建。</section>';let opts=roleData.map(r=>`<option value="${esc(r.id)}">${esc(r.displayName)} · ${esc(r.id)}</option>`).join('');privateRole.innerHTML=opts;groupRole.innerHTML=opts;let c={};try{c=JSON.parse(bridge.config())}catch{};if(c.privateRole)privateRole.value=c.privateRole;if(c.groupRole)groupRole.value=c.groupRole}
+    function loadRoles(){try{roleData=JSON.parse(bridge.roles()||'[]')}catch{roleData=[]}let list=document.querySelector('#roleList');list.innerHTML=roleData.map(r=>`<section class="card role"><div class="avatar">${r.builtin?'✦':'✎'}</div><div><b>${esc(r.displayName)}</b><small>${esc(r.id)}</small></div><span class="tag">${r.builtin?'内置':'自定义'}</span><div class="role-actions"><button class="outline" onclick="editRole('${esc(r.id)}')">编辑</button>${r.builtin?'':'<button class="danger" onclick="removeRole(\''+esc(r.id)+'\')">删除</button>'}</div></section>`).join('')||'<section class="card muted">还没有自定义角色，点击右上角新建。</section>';let opts=roleData.map(r=>`<option value="${esc(r.id)}">${esc(r.displayName)} · ${esc(r.id)}</option>`).join('');let p=document.getElementById('privateRole'),g=document.getElementById('groupRole');p.innerHTML=opts;g.innerHTML=opts;p.onchange=()=>{scopeDirty=true};g.onchange=()=>{scopeDirty=true};let c={};try{c=JSON.parse(bridge.config())}catch{};if(!scopeDirty){if(c.privateRole)p.value=c.privateRole;if(c.groupRole)g.value=c.groupRole}}
     function newRole(){editingRoleId='';roleId.value='custom.newrole';roleName.value='';rolePrompt.value='';rolePrompt.focus();toast('已新建空白角色卡')}
     function editRole(id){let r=roleData.find(x=>x.id===id);if(!r)return;editingRoleId=id;roleId.value=r.id;roleName.value=r.displayName||'';rolePrompt.value=r.prompt||'';toast(r.builtin?'内置角色仅供查看':'已载入角色卡')}
     function saveRole(){let id=roleId.value.trim();let ok=bridge.saveRole(JSON.stringify({id:id,displayName:roleName.value,prompt:rolePrompt.value}));if(ok){editingRoleId=id;loadRoles();toast('角色卡已保存，重启 Runtime 后可用')}else toast('角色卡保存失败：ID 必须是 custom.xxx 且提示词不能为空')}
@@ -85,13 +85,14 @@
     function deleteCurrentRole(){if(!editingRoleId)toast('请先从列表选择自定义角色');else removeRole(editingRoleId)}
     function exportRole(){let r=roleData.find(x=>x.id===editingRoleId)||{id:roleId.value,displayName:roleName.value,prompt:rolePrompt.value};copyText(JSON.stringify(r,null,2))}
     function importRole(){try{let r=JSON.parse(roleImportJson.value);let ok=bridge.saveRole(JSON.stringify(r));if(!ok)throw Error();editingRoleId=r.id;loadRoles();editRole(r.id);roleImportJson.value='';toast('角色卡已导入')}catch{toast('导入失败，请检查 JSON 和 custom. ID')}}
-    function saveRoleScope(){let ok=bridge.saveRoleScope(privateRole.value,groupRole.value);toast(ok?'私聊/群聊角色范围已保存':'角色范围保存失败')}
+    function saveRoleScope(){let p=document.getElementById('privateRole'),g=document.getElementById('groupRole');let ok=bridge.saveRoleScope(p.value,g.value);if(ok){scopeDirty=false;toast('私聊/群聊角色范围已保存；新会话将使用该默认角色')}else toast('角色范围保存失败')}
     function copyText(text){try{bridge.copy(text);toast('已复制：'+text)}catch{toast('复制失败，请长按指令')}}
     function checkUpdate(){let raw='';try{raw=bridge.checkUpdate()}catch{toast('更新检查不可用');return}try{let u=JSON.parse(raw);if(!u.ok){updateHint.textContent='检查失败：'+(u.error||'网络不可用');toast('暂时无法检查更新');return}updateTag.textContent='v'+u.latestVersion;updateHint.textContent=u.hasUpdate?'发现新版本 · 点击版本号打开 Release':'已是最新版本';updateTag.onclick=()=>bridge.openRelease(u.url);updateTag.style.cursor='pointer';toast(u.hasUpdate?'发现新版本':'当前已是最新版本')}catch{toast('更新信息解析失败')}}
     loadRoles();refresh();setInterval(refresh,3000);
   </script>
 </body>
 </html>
+
 
 
 
