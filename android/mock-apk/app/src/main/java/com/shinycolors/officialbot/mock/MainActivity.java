@@ -107,11 +107,11 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public String roles() {
             try {
                 org.json.JSONArray out = new org.json.JSONArray();
-                addBuiltin(out, "shiny-colors.nanoka", "七草日花", "日花", "内置角色");
-                addBuiltin(out, "shiny-colors.hazuki", "七草はづき", "はづき,羽月", "内置角色");
-                addBuiltin(out, "shiny-colors.tsun", "傲娇助手", "傲娇", "内置角色");
-                addBuiltin(out, "shiny-colors.tooru", "浅仓透", "透", "内置角色");
-                addBuiltin(out, "shiny-colors.whale", "鲸鱼", "鲸鱼", "内置角色");
+                addBuiltin(out, "nanoka", "七草日花", "日花", "内置角色");
+                addBuiltin(out, "hazuki", "七草はづき", "はづき,羽月", "内置角色");
+                addBuiltin(out, "tsun", "傲娇助手", "傲娇", "内置角色");
+                addBuiltin(out, "tooru", "浅仓透", "透", "内置角色");
+                addBuiltin(out, "whale", "鲸鱼", "鲸鱼", "内置角色");
                 for (JSONObject card : new RoleCardStore(MainActivity.this).list()) {
                     card.put("builtin", false);
                     out.put(card);
@@ -120,9 +120,19 @@ public final class MainActivity extends Activity {
             } catch (Exception error) { return "[]"; }
         }
 
-        private void addBuiltin(org.json.JSONArray out, String id, String name, String aliases, String description) throws Exception {
+        private void addBuiltin(org.json.JSONArray out, String shortId, String name, String aliases, String description) throws Exception {
+            String prompt = "";
+            try (java.io.InputStream input = getAssets().open("runtime/presets/preset." + shortId + ".md")) {
+                java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[4096]; int count;
+                while ((count = input.read(buffer)) >= 0) bytes.write(buffer, 0, count);
+                prompt = new String(bytes.toByteArray(), StandardCharsets.UTF_8);
+                int marker = prompt.indexOf("---", 3);
+                if (marker >= 0) prompt = prompt.substring(marker + 3).trim();
+            } catch (Exception ignored) { }
+            if (prompt.trim().isEmpty()) return;
             JSONObject card = new JSONObject();
-            card.put("id", id); card.put("displayName", name); card.put("description", description);
+            card.put("id", "shiny-colors." + shortId); card.put("displayName", name); card.put("description", description); card.put("prompt", prompt);
             card.put("aliases", new org.json.JSONArray(aliases.split(","))); card.put("builtin", true);
             out.put(card);
         }

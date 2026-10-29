@@ -26,6 +26,13 @@ if (Test-Path $sourceDeepseek) {
   New-Item -ItemType Directory -Force $targetDeepseek | Out-Null
   Copy-Item (Join-Path $sourceDeepseek '*') $targetDeepseek -Recurse -Force
 }
+# Android QQ text runtime does not need desktop client UI, experimental agents,
+# ACP integrations, or session telemetry. Removing them reduces DSH boot scan time.
+$optionalDeepseek = Get-ChildItem $targetDeepseek -Directory -ErrorAction SilentlyContinue | Where-Object {
+  $_.Name -like 'dsh-client-*' -or $_.Name -like 'dsh-experimental-*' -or
+  $_.Name -like 'dsh-acp*' -or $_.Name -in @('dsh-web-frontend', 'dsh-otel', 'dsh-session-telemetry-otel')
+}
+foreach ($optional in $optionalDeepseek) { [IO.Directory]::Delete($optional.FullName, $true) }
 $extraPackages = @('@opentelemetry/sdk-logs', '@opentelemetry/api-logs', '@opentelemetry/core', '@opentelemetry/resources', '@earendil-works/pi-ai', '@earendil-works/pi-telemetry', '@joplin/turndown-plugin-gfm', '@mixmark-io/domino', 'diff', 'ipaddr.js', 'turndown', 'eventsource-parser', 'execa', 'yocto-queue', 'is-plain-obj')
 foreach ($packageName in $extraPackages) {
   $sourcePackage = Join-Path $env:SHINY_RUNTIME_SOURCE $packageName

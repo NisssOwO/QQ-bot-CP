@@ -141,16 +141,32 @@ final class LoopbackApiServer implements Runnable {
     private String rolesJson() {
         JSONArray items = new JSONArray();
         try {
-            items.put(new JSONObject("{\"id\":\"shiny-colors.nanoka\",\"displayName\":\"七草日花\",\"aliases\":[\"日花\"],\"builtin\":true}"));
-            items.put(new JSONObject("{\"id\":\"shiny-colors.hazuki\",\"displayName\":\"七草はづき\",\"aliases\":[],\"builtin\":true}"));
-            items.put(new JSONObject("{\"id\":\"shiny-colors.tsun\",\"displayName\":\"傲娇助手\",\"aliases\":[\"傲娇助手\"],\"builtin\":true}"));
-            items.put(new JSONObject("{\"id\":\"shiny-colors.tooru\",\"displayName\":\"浅仓透\",\"aliases\":[],\"builtin\":true}"));
-            items.put(new JSONObject("{\"id\":\"shiny-colors.whale\",\"displayName\":\"鲸鱼\",\"aliases\":[],\"builtin\":true}"));
+            addBuiltin(items, "nanoka", "七草日花", "日花");
+            addBuiltin(items, "hazuki", "七草はづき", "はづき,羽月");
+            addBuiltin(items, "tsun", "傲娇助手", "傲娇助手");
+            addBuiltin(items, "tooru", "浅仓透", "");
+            addBuiltin(items, "whale", "鲸鱼", "鲸鱼");
         } catch (Exception ignored) { }
         for (JSONObject card : roles.list()) {
             try { card.put("builtin", false); items.put(card); } catch (Exception ignored) { }
         }
         return "{\"roles\":" + items.toString() + "}";
+    }
+
+    private void addBuiltin(JSONArray items, String shortId, String displayName, String aliases) {
+        try (java.io.InputStream input = context.getAssets().open("runtime/presets/preset." + shortId + ".md")) {
+            java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[4096]; int count;
+            while ((count = input.read(buffer)) >= 0) bytes.write(buffer, 0, count);
+            String prompt = new String(bytes.toByteArray(), StandardCharsets.UTF_8);
+            int marker = prompt.indexOf("---", 3);
+            if (marker >= 0) prompt = prompt.substring(marker + 3).trim();
+            if (prompt.isEmpty()) return;
+            JSONObject item = new JSONObject();
+            item.put("id", "shiny-colors." + shortId); item.put("displayName", displayName);
+            item.put("aliases", new JSONArray(aliases.isEmpty() ? "[]" : "[\"" + aliases.replace(",", "\",\"") + "\"]"));
+            item.put("prompt", prompt); item.put("builtin", true); items.put(item);
+        } catch (Exception ignored) { }
     }
 
     private static String escape(String value) { return value.replace("\\", "\\\\").replace("\"", "\\\""); }

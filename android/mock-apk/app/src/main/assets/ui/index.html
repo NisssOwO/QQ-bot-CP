@@ -16,11 +16,11 @@
     <div class="wrap">
       <div id="view-overview" class="view active">
       <section class="hero"><div class="hero-row"><div class="online"><i class="dot"></i><span id="runState">运行中</span></div><span class="pill">官方 QQ Bot</span></div><h1 id="heroRoleTitle">私聊：七草日花 · 群聊：七草日花</h1><p id="runHint">当前角色 · 私聊与群聊状态正常</p><div class="hero-actions"><button class="primary" onclick="restartBot()">重启 Runtime</button><button onclick="refresh()">刷新状态</button></div></section>
-      <div class="section"><h2>运行概览</h2><a href="#">详细状态</a></div>
+      <div class="section"><h2>运行概览</h2><a href="javascript:showRuntimeStatus()">详细状态</a></div>
       <section class="card metrics"><div class="metric"><b>在线</b><span>QQ 网关</span></div><div class="metric"><b>12</b><span>今日消息</span></div><div class="metric"><b>正常</b><span>模型接口</span></div></section>
       <div class="section"><h2>Runtime 日志</h2><a href="javascript:refreshLogs()">刷新日志</a></div>
       <section class="card"><pre id="runtimeLog" style="max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word;background:#101521;border:1px solid var(--line);border-radius:11px;padding:11px;color:#c7d0e8;font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace">等待读取 Runtime 日志…</pre><div style="display:flex;gap:8px;margin-top:10px"><button class="copy" style="flex:1" onclick="refreshLogs()">刷新</button><button class="copy" style="flex:1" onclick="copyText(document.getElementById('runtimeLog').textContent)">复制日志</button></div></section>
-      <div class="section"><h2>当前会话</h2><a href="#">查看会话</a></div>
+      <div class="section"><h2>当前会话</h2><a href="javascript:showCommands()">查看指令</a></div>
       <section class="card"><div class="role"><div class="avatar">✉</div><div><b>私聊角色</b><small id="privateCurrentRole">七草日花 · shiny-colors.nanoka</small></div><span class="tag">私聊</span></div><div style="height:1px;background:var(--line);margin:15px 0"></div><div class="role"><div class="avatar" style="background:linear-gradient(145deg,#c7d7ff,#8098ff)">群</div><div><b>群聊角色</b><small id="groupCurrentRole">七草日花 · shiny-colors.nanoka</small></div><span class="tag">群聊</span></div><div style="height:1px;background:var(--line);margin:15px 0"></div><small style="color:var(--muted)">角色按私聊/群聊作用域分别保存</small></section>
       </div>
       <div id="view-roles" class="view">
@@ -43,7 +43,7 @@
       <div class="section"><h2>作用范围</h2></div>
       <section class="card"><div class="field"><label>当前私聊角色</label><select id="privateRole"></select></div><div class="field"><label>当前群聊角色</label><select id="groupRole"></select></div><button class="save" onclick="saveRoleScope()">保存范围</button></section>
       </div>      <div id="view-commands" class="view">
-      <div class="section"><h2>会话指令</h2><a href="#">单条复制</a></div>
+      <div class="section"><h2>会话指令</h2><a href="javascript:toast('每条指令右侧可单独复制')">使用说明</a></div>
       <section class="card">
         <div class="command"><code>/preset &lt;角色ID&gt;</code><button class="copy" onclick="copyText('/preset custom.test')">复制</button></div>
         <div class="command"><code>/preset</code><button class="copy" onclick="copyText('/preset')">复制</button></div>
@@ -51,21 +51,21 @@
         <div class="command"><code>/new</code><button class="copy" onclick="copyText('/new')">复制</button></div>
       </section>
       <div class="section"><h2>会话操作</h2></div>
-      <section class="card"><div class="command"><code>清空当前上下文</code><button class="copy" onclick="toast('将在下一版接入')">操作</button></div><div class="command"><code>查看当前角色</code><button class="copy" onclick="copyText('/preset')">复制</button></div><div class="command"><code>新建会话并保留角色</code><button class="copy" onclick="copyText('/new')">复制</button></div></section>
-      <div class="section"><h2>静默控制</h2><a href="#">当前：关闭</a></div>
-      <section class="card"><div class="role"><div><b>静默时段</b><small>静默期间不主动发送消息</small></div><span class="tag">关闭</span></div><button class="save" style="margin-top:14px" onclick="toast('静默设置已打开')">管理静默时段</button></section>
+      <section class="card"><div class="command"><code>/new（清空当前上下文）</code><button class="copy" onclick="copyText('/new')">复制</button></div><div class="command"><code>查看当前角色</code><button class="copy" onclick="copyText('/preset')">复制</button></div><div class="command"><code>新建会话并保留角色</code><button class="copy" onclick="copyText('/new')">复制</button></div></section>
+      <div class="section"><h2>静默控制</h2><a href="javascript:toast('静默当前为关闭')">当前：关闭</a></div>
+      <section class="card"><div class="role"><div><b>静默时段</b><small>静默期间不主动发送消息</small></div><span class="tag">关闭</span></div><button class="save" style="margin-top:14px" onclick="toast('静默时段需通过 Runtime 配置文件设置，当前面板暂不写入运行配置')">查看设置说明</button></section>
       </div>
       <div id="view-settings" class="view">
-      <div class="section"><h2>运行配置</h2><a href="#">已加密保存</a></div>
+      <div class="section"><h2>运行配置</h2><a href="javascript:showCredentialStatus()">查看凭据状态</a></div>
       <section class="card"><div class="field"><label>QQ 官方机器人 AppID</label><input id="appId" value="1905961271"></div><div class="field"><label>QQ AppSecret</label><input id="secret" type="password" placeholder="已加密保存，留空表示不修改"></div><div class="field"><label>模型 API Key</label><input id="apiKey" type="password" placeholder="已加密保存，留空表示不修改"></div><div class="field"><label>接口类型</label><input value="OpenAI 兼容接口" readonly></div><div class="field"><label>模型名称</label><input id="model" value="deepseek-v4-flash-0731"></div><div class="field"><label>OpenAI-compatible Base URL</label><input id="baseUrl" value="https://maas.qianwenai.com/compatible-mode/v1"></div><button class="save" onclick="saveConfig()">保存运行配置</button></section>
-      <div class="section"><h2>QQ 与安全</h2><a href="#">Keystore</a></div>
-      <section class="card"><div class="role"><div><b>密钥存储</b><small>AppSecret 和 API Key 使用 Android Keystore 加密</small></div><span class="tag">安全</span></div><button class="save" style="margin-top:14px" onclick="toast('打开凭据管理')">查看配置状态</button></section>
+      <div class="section"><h2>QQ 与安全</h2><a href="javascript:showCredentialStatus()">Keystore</a></div>
+      <section class="card"><div class="role"><div><b>密钥存储</b><small>AppSecret 和 API Key 使用 Android Keystore 加密</small></div><span class="tag">安全</span></div><button class="save" style="margin-top:14px" onclick="showCredentialStatus()">查看配置状态</button></section>
       <div class="section"><h2>后台运行</h2></div>
       <section class="card"><div class="role"><div><b>锁屏后继续运行</b><small>使用前台服务保持消息接收</small></div><span class="tag">开启</span></div><div class="role" style="margin-top:16px"><div><b>通知提醒</b><small>只显示连接和错误状态</small></div><span class="tag">低打扰</span></div></section>
       <div class="section"><h2>软件更新</h2><a href="https://github.com/NisssOwO/QQ-bot-CP/releases" target="_blank">Release</a></div>
       <section class="card"><div class="role"><div><b>QQ-bot-CP</b><small id="updateHint">当前版本 · 检查 GitHub Release</small></div><span class="tag" id="updateTag">v0.2.3</span></div><button class="save" style="margin-top:14px" onclick="checkUpdate()">检查更新</button></section>
       <div class="section"><h2>应用信息</h2></div>
-      <section class="card"><div class="field"><label>运行环境</label><input value="Android · arm64-v8a" readonly></div><div class="field"><label>软件版本</label><input value="QQ-bot-CP v0.2.3 · Node 26 · DSH v0.2.1" readonly></div><button class="save" onclick="toast('数据管理即将打开')">备份配置与角色卡</button></section>
+      <section class="card"><div class="field"><label>运行环境</label><input value="Android · arm64-v8a" readonly></div><div class="field"><label>软件版本</label><input value="QQ-bot-CP v0.2.3 · Node 26 · DSH v0.2.1" readonly></div><button class="save" onclick="backupConfig()">备份配置与角色卡</button></section>
       </div>
     </div>
     <div id="deleteConfirm" class="confirm-backdrop" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
@@ -79,7 +79,10 @@
   </main>
   <nav class="bottom"><button class="nav active" onclick="showView('overview',this)"><strong>⌂</strong>总览</button><button class="nav" onclick="showView('roles',this)"><strong>✦</strong>角色</button><button class="nav" onclick="showView('commands',this)"><strong>⌘</strong>指令</button><button class="nav" onclick="showView('settings',this)"><strong>⚙</strong>设置</button></nav>
   <script>
-    function showView(name,button){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelector('#view-'+name).classList.add('active');document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));button.classList.add('active');window.scrollTo({top:0,behavior:'smooth'})}
+    function showRuntimeStatus(){showView('overview',document.querySelector('.nav'));setTimeout(()=>document.getElementById('runtimeLog')?.scrollIntoView({behavior:'smooth',block:'center'}),80)}
+    function showCommands(){showView('commands',document.querySelectorAll('.nav')[2])}
+    function showCredentialStatus(){let c={};try{c=JSON.parse(bridge.config())}catch{};toast(c.qqbotConfigured&&c.llmConfigured?'QQ 与模型凭据均已配置':'仍有凭据未配置')}
+    function backupConfig(){let c={};try{c=JSON.parse(bridge.config())}catch{};let roles=roleData.map(r=>({id:r.id,displayName:r.displayName,prompt:r.builtin?'[内置角色提示词随安装包提供]':r.prompt}));let data=JSON.stringify({version:1,exportedAt:new Date().toISOString(),config:{appId:c.appId,provider:c.provider,model:c.model,baseUrl:c.baseUrl,privateRole:c.privateRole,groupRole:c.groupRole},roles:roles},null,2);copyText(data);toast('已复制脱敏备份；未包含密钥')}    function showView(name,button){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelector('#view-'+name).classList.add('active');document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));button.classList.add('active');window.scrollTo({top:0,behavior:'smooth'})}
     const bridge=window.AndroidBridge;
     function toast(text){let el=document.createElement('div');el.textContent=text;Object.assign(el.style,{position:'fixed',left:'50%',bottom:'88px',transform:'translateX(-50%)',background:'#edf1ff',color:'#111522',padding:'10px 15px',borderRadius:'12px',fontSize:'13px',zIndex:9});document.body.append(el);setTimeout(()=>el.remove(),1600)}
     function roleLabel(id){let r=roleData.find(x=>x.id===id);return r?r.displayName:(id||'未设置')}
