@@ -68,11 +68,34 @@ public final class MainActivity extends Activity {
                 out.put("provider", p.getString("provider", "relay"));
                 out.put("model", p.getString("model", "deepseek-chat"));
                 out.put("baseUrl", p.getString("baseUrl", ""));
-                out.put("activeRole", p.getString("activeRole", "shiny-colors.nanoka"));
-                out.put("privateRole", p.getString("privateRole", "shiny-colors.nanoka"));
-                out.put("groupRole", p.getString("groupRole", "shiny-colors.nanoka"));
+                String defaultRole = p.getString("defaultRole", "shiny-colors.nanoka");
+                out.put("activeRole", defaultRole);
+                out.put("privateRole", readScopedRole("private", defaultRole));
+                out.put("groupRole", readScopedRole("group", defaultRole));
                 return out.toString();
             } catch (Exception error) { return "{}"; }
+        }
+
+        private String readScopedRole(String scope, String fallback) {
+            try {
+                CredentialStore credentials = new CredentialStore(MainActivity.this);
+                String appId = credentials.has("qqbotAppId") ? credentials.read("qqbotAppId") : "";
+                File file = new File(getFilesDir(), "runtime/.dsh-qqbot/model-prefs.json");
+                if (!file.isFile()) return fallback;
+                JSONObject data = new JSONObject(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+                JSONObject presets = data.optJSONObject("presets");
+                if (presets == null) return fallback;
+                String[] keys = {
+                        "qqbot:" + appId + ":" + scope + ":*",
+                        "qqbot:*:" + scope + ":*",
+                        "qqbot:" + scope + ":*"
+                };
+                for (String key : keys) {
+                    String value = presets.optString(key, "").trim();
+                    if (!value.isEmpty()) return value;
+                }
+            } catch (Exception ignored) { }
+            return fallback;
         }
 
         @JavascriptInterface public void start() { runOnUiThread(() -> startForegroundService(new Intent(MainActivity.this, BotRuntimeService.class))); }
