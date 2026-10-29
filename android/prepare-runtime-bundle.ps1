@@ -42,6 +42,15 @@ foreach ($packageName in $extraPackages) {
     Copy-Item $sourcePackage $targetPackage -Recurse -Force
   }
 }
+# The pi-ai LLM adapter is a profile plugin rather than a core DSH package.
+# When the workspace closure is selected as the source it may not contain this
+# package, while the Android runtime dependency set does. Always include it.
+$llmPiAi = Join-Path $assets 'node_modules\@deepseek-ai\dsh-llm-pi-ai'
+$llmPiAiSource = Join-Path $runtimeDeps '@deepseek-ai\dsh-llm-pi-ai'
+if (-not (Test-Path $llmPiAi) -and (Test-Path $llmPiAiSource)) {
+  New-Item -ItemType Directory -Force (Split-Path $llmPiAi) | Out-Null
+  Copy-Item $llmPiAiSource $llmPiAi -Recurse -Force
+}
 # Some DSH packages resolve OpenTelemetry from nested dependency roots.
 $nestedOtelRoots = @(
   (Join-Path $assets 'node_modules\@deepseek-ai\dsh-base\node_modules\@opentelemetry'),
