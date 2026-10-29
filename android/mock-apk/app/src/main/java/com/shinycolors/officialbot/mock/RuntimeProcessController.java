@@ -34,13 +34,12 @@ final class RuntimeProcessController {
         process = builder.start();
         context.getSharedPreferences(BotRuntimeService.PREFS, Context.MODE_PRIVATE)
                 .edit().remove("runtimeLastError").remove("runtimeStartError").remove("runtimeInstallError")
-                .remove("runtimeExitCode").putBoolean("runtimeProcessAlive", true).putBoolean("running", true).apply();
+                .remove("runtimeExitCode").remove("runtimeWarnings").putBoolean("runtimeRestarting", false)
+                .putBoolean("runtimeProcessAlive", true).putBoolean("running", true).apply();
         Thread watcher = new Thread(() -> {
             try (java.io.BufferedReader errors = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()))) {
                 String line;
-                while ((line = errors.readLine()) != null) {
-                    append("runtimeLastError", line);
-                }
+                while ((line = errors.readLine()) != null) append(isNonFatalWarning(line) ? "runtimeWarnings" : "runtimeLastError", line);
             } catch (IOException ignored) { }
             try {
                 int exit = process.waitFor();
@@ -68,6 +67,12 @@ final class RuntimeProcessController {
         String next = old.isEmpty() ? line : old + "\n" + line;
         if (next.length() > 8192) next = next.substring(next.length() - 8192);
         prefs.edit().putString(key, next).apply();
+    }
+
+    private static boolean isNonFatalWarning(String line) {
+        String value = line == null ? "" : line;
+        return value.contains("dsh: warning:") || value.contains("plugin-manager")
+                || value.contains("dsh-otel") || value.contains("session-telemetry-otel");
     }
 
     boolean carrierAvailable() {

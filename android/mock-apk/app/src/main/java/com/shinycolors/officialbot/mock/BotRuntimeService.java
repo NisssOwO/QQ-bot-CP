@@ -50,7 +50,7 @@ public final class BotRuntimeService extends Service {
             serverThread.start();
             startRealRuntimeIfAvailable();
         } catch (Exception error) {
-            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("runtimeInstallError", error.getMessage()).apply();
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("runtimeInstallError", error.getMessage()).putBoolean("runtimeRestarting", false).apply();
             stopSelf();
         }
     }
@@ -70,7 +70,7 @@ public final class BotRuntimeService extends Service {
             env.put("LLM_BASE_URL", config.getString("baseUrl", "https://api.example.com/v1"));
             runtimeController.start(env);
         } catch (Exception error) {
-            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("runtimeStartError", error.toString()).apply();
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("runtimeStartError", error.toString()).putBoolean("runtimeRestarting", false).apply();
         }
     }
 

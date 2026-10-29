@@ -45,10 +45,12 @@ public final class MainActivity extends Activity {
             try {
                 JSONObject out = new JSONObject();
                 out.put("running", p.getBoolean("runtimeProcessAlive", false));
+                out.put("restarting", p.getBoolean("runtimeRestarting", false));
                 out.put("port", p.getInt("port", 0));
                 out.put("token", p.getString("token", ""));
                 out.put("lastOutput", p.getString("runtimeLastOutput", ""));
                 out.put("lastError", p.getString("runtimeLastError", ""));
+                out.put("warnings", p.getString("runtimeWarnings", ""));
                 out.put("runtimeExitCode", p.getInt("runtimeExitCode", -1));
                 out.put("assetVersion", p.getString("assetVersion", ""));
                 return out.toString();
@@ -78,8 +80,9 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void restart() {
             runOnUiThread(() -> {
                 Intent intent = new Intent(MainActivity.this, BotRuntimeService.class);
+                getSharedPreferences(BotRuntimeService.PREFS, MODE_PRIVATE).edit().putBoolean("runtimeRestarting", true).apply();
                 stopService(intent);
-                new Handler(Looper.getMainLooper()).postDelayed(() -> startForegroundService(intent), 1400L);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> startForegroundService(intent), 2200L);
             });
         }
 
