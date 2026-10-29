@@ -11,7 +11,7 @@ final class RuntimeAssetInstaller {
 
     static File install(Context context) throws IOException {
         File target = new File(context.getFilesDir(), "runtime");
-        String version = "node26-bundle-v30";
+        String version = "node26-bundle-v32";
         if (!version.equals(context.getSharedPreferences("runtime", Context.MODE_PRIVATE).getString("assetVersion", ""))) {
             context.getSharedPreferences("runtime", Context.MODE_PRIVATE).edit().putString("assetVersion", version).remove("runtimeInstallError").apply();
         }
@@ -19,9 +19,9 @@ final class RuntimeAssetInstaller {
         // Update patched runtime code without deleting user presets and per-peer settings.
         copyFile(context, "runtime/node_modules/@tencent-connect/dsh-qqbot/dist/model/prefs-store.js",
                 new File(target, "node_modules/@tencent-connect/dsh-qqbot/dist/model/prefs-store.js"), true);
-        copyFile(context, "runtime/node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js",
-                new File(target, "node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js"), true);
-        patchSessionManager(new File(target, "node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js"));
+        File sessionManager = new File(target, "node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js");
+        sessionManager.delete();
+        copyFile(context, "runtime/node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js", sessionManager);
         File node = new File(target, "bin/node");
         node.setExecutable(true, false);
         File execDir = context.getCodeCacheDir();
@@ -65,13 +65,6 @@ final class RuntimeAssetInstaller {
         }
     }
 
-    private static void patchSessionManager(File file) throws IOException {
-        if (!file.isFile()) return;
-        String text = new String(java.nio.file.Files.readAllBytes(file.toPath()), java.nio.charset.StandardCharsets.UTF_8);
-        String patched = text.replace("if (overridePreset && persistedPreset && overridePreset !== persistedPreset)",
-                "if (overridePreset && overridePreset !== persistedPreset)");
-        if (!patched.equals(text)) java.nio.file.Files.write(file.toPath(), patched.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-    }
 }
 
 
