@@ -85,7 +85,7 @@
     function deleteCurrentRole(){if(!editingRoleId)toast('请先从列表选择自定义角色');else removeRole(editingRoleId)}
     function exportRole(){let r=roleData.find(x=>x.id===editingRoleId)||{id:roleId.value,displayName:roleName.value,prompt:rolePrompt.value};copyText(JSON.stringify(r,null,2))}
     function importRole(){try{let r=JSON.parse(roleImportJson.value);let ok=bridge.saveRole(JSON.stringify(r));if(!ok)throw Error();editingRoleId=r.id;loadRoles();editRole(r.id);roleImportJson.value='';toast('角色卡已导入')}catch{toast('导入失败，请检查 JSON 和 custom. ID')}}
-    function saveRoleScope(){let p=document.getElementById('privateRole'),g=document.getElementById('groupRole');let ok=bridge.saveRoleScope(p.value,g.value);if(ok){scopeDirty=false;toast('作用范围配置已保存；当前会话请用 /preset 切换')}else toast('角色范围保存失败')}
+    function saveRoleScope(){let p=document.getElementById('privateRole'),g=document.getElementById('groupRole');let ok=bridge.saveRoleScope(p.value,g.value);if(ok){scopeDirty=false;bridge.restart();toast('作用范围已保存，Runtime 重启后对新会话生效；当前会话请用 /new')}else toast('角色范围保存失败：请先填写 QQ AppID')}
     function copyText(text){try{bridge.copy(text);toast('已复制：'+text)}catch{toast('复制失败，请长按指令')}}
     function checkUpdate(){let raw='';try{raw=bridge.checkUpdate()}catch{toast('更新检查不可用');return}try{let u=JSON.parse(raw);if(!u.ok){updateHint.textContent='检查失败：'+(u.error||'网络不可用');toast('暂时无法检查更新');return}updateTag.textContent='v'+u.latestVersion;updateHint.textContent=u.hasUpdate?'发现新版本 · 点击版本号打开 Release':'已是最新版本';updateTag.onclick=()=>bridge.openRelease(u.url);updateTag.style.cursor='pointer';toast(u.hasUpdate?'发现新版本':'当前已是最新版本')}catch{toast('更新信息解析失败')}}
     loadRoles();refresh();setInterval(refresh,3000);
