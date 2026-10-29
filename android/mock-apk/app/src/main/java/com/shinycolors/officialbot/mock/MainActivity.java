@@ -94,6 +94,18 @@ public final class MainActivity extends Activity {
                     String value = presets.optString(key, "").trim();
                     if (!value.isEmpty()) return value;
                 }
+                // The UI has no single peer selected. If /preset was applied
+                // to an exact peer, show the newest matching scope as a
+                // useful overview hint instead of hiding the active role.
+                java.util.Iterator<String> names = presets.keys();
+                String marker = ":" + scope + ":";
+                while (names.hasNext()) {
+                    String key = names.next();
+                    if (key.contains(marker)) {
+                        String value = presets.optString(key, "").trim();
+                        if (!value.isEmpty()) return value;
+                    }
+                }
             } catch (Exception ignored) { }
             return fallback;
         }
