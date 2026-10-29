@@ -20,7 +20,6 @@
       <section class="card metrics"><div class="metric"><b id="gatewayMetric">在线</b><span>QQ 网关</span></div><div class="metric"><b>—</b><span>消息统计</span></div><div class="metric"><b id="modelMetric">检查中</b><span>模型接口</span></div></section>
       <div class="section"><h2>Runtime 日志</h2><a href="javascript:refreshLogs()">刷新日志</a></div>
       <section class="card"><pre id="runtimeLog" style="max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word;background:#101521;border:1px solid var(--line);border-radius:11px;padding:11px;color:#c7d0e8;font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace">等待读取 Runtime 日志…</pre><div style="display:flex;gap:8px;margin-top:10px"><button class="copy" style="flex:1" onclick="refreshLogs()">刷新</button><button class="copy" style="flex:1" onclick="copyText(document.getElementById('runtimeLog').textContent)">复制日志</button></div></section>
-      <div class="section"><h2>当前会话</h2><a href="javascript:showCommands()">查看指令</a></div>
       </div>
       <div id="view-roles" class="view">
       <div class="section"><h2>角色管理</h2><a href="javascript:newRole()">＋新建角色</a></div>
