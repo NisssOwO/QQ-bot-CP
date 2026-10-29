@@ -86,7 +86,7 @@ if (Test-Path $sessionManager) {
         let sessionId = SessionId(this.currentSessionId(key));
         const overridePreset = this.modelResolver.getPreset(key);
         const persistedPreset = await this.resolvePersistedPreset(sessionId);
-        if (overridePreset && persistedPreset && overridePreset !== persistedPreset) {
+        if (overridePreset && overridePreset !== persistedPreset) {
             this.modelResolver.setSessionId(key, randomUUID());
             sessionId = SessionId(this.currentSessionId(key));
             this.logger.info(`preset changed: key=${key} ${persistedPreset} → ${overridePreset}; starting a fresh session`);
