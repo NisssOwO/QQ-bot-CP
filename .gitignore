@@ -23,6 +23,7 @@ android/mock-apk/app/src/main/assets/runtime/runtime-missing-dependencies.txt
 
 # Local Android toolchains, generated builds, APKs and device artifacts
 android/tools/
+android/signing/
 android/**/local.properties
 android/**/.gradle/
 android/**/build/

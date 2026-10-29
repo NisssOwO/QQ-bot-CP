@@ -3,6 +3,10 @@ $android = Split-Path -Parent $MyInvocation.MyCommand.Path
 $project = Join-Path $android 'mock-apk'
 $out = Join-Path $android 'manual-build-next'
 $tools = Join-Path $android 'tools'
+$signingDir = Join-Path $android 'signing'
+$keystore = Join-Path $signingDir 'qqbot-cp-release.keystore'
+$keyAlias = 'qqbotcp'
+$keyPassword = 'qqbotcp'
 $javaHome = Join-Path $tools 'jdk17\jdk-17.0.20+8'
 $env:JAVA_HOME = $javaHome
 $sdk = Join-Path $tools 'sdk'
@@ -44,8 +48,8 @@ try {
   & "$javaHome\bin\jar.exe" uf "$apkDir\unsigned.apk" -C "$xOut\dex" classes.dex
   & "$bt\zipalign.exe" -f 4 "$apkDir\unsigned.apk" "$apkDir\aligned.apk"
   if ($LASTEXITCODE) { throw 'zipalign failed' }
-  if (-not (Test-Path "$tools\debug.keystore")) { & "$javaHome\bin\keytool.exe" -genkeypair -v -keystore "$tools\debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US' }
-  & "$bt\apksigner.bat" sign --ks "$tools\debug.keystore" --ks-pass pass:android --key-pass pass:android --out "$apkDir\app-debug-keystore.apk" "$apkDir\aligned.apk"
+  if (-not (Test-Path $keystore)) { throw "release keystore not found: $keystore" }
+  & "$bt\apksigner.bat" sign --ks $keystore --ks-key-alias $keyAlias --ks-pass "pass:$keyPassword" --key-pass "pass:$keyPassword" --out "$apkDir\app-debug-keystore.apk" "$apkDir\aligned.apk"
   if ($LASTEXITCODE) { throw 'apksigner failed' }
   Write-Host "BUILD_SUCCESS: $android\manual-build-next\apk\app-debug-keystore.apk"
 } finally { subst $drive /D | Out-Null }
