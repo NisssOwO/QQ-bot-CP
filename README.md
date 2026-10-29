@@ -179,9 +179,13 @@ rg -n --hidden -g '!node_modules/**' -g '!.dsh-home/**' -g '!.local-secrets/**' 
 Android APK 使用 QQ-bot-CP 的简约蓝色对话气泡图标。设置页内置“检查更新”按钮，会访问 GitHub 仓库的最新 Release 接口，显示当前版本、最新版本和更新说明；如果发现新版本，可打开 Release 页面下载 APK。
 
 APK 本身不提交到 Git 仓库，而是作为 Release 附件发布。这样可以避免 Git 历史被大型二进制文件污染，也方便按版本保留安装包。
+
+当前 `v0.2.6` Android arm64-v8a APK：约 **117.0 MiB**（122,735,489 字节）。其中约 59 MiB 是 Android arm64 Node Runtime，其余主要是 DSH 生产依赖和 Android 宿主资源。该大小不包含 SDK、Gradle、NDK 或 Windows 专用组件。
+
+SHA-256：`C7C8C01F99AA041C6EFB591BA279EFBE4271349D9A1C849A49D7E0BA00E96ACD`
 ## 当前状态
 
-桌面官方 QQ Bot 链路、角色路由、上下文隔离、错误恢复和 Android Runtime 原型已经完成验证。Android 仍需要在目标设备上继续做长时间运行、断线重连、群聊和自定义角色卡的最终验收。
+桌面官方 QQ Bot 链路、角色路由、上下文隔离、错误恢复和 Android Runtime 原型已经完成验证。当前 Android 测试版为 `v0.2.6`，已在 arm64 真机确认 Runtime 存活、官方 QQ Bot `Bot ready` 和文字回复链路；仍需要继续做长时间运行、断线重连、群聊和自定义角色卡的最终验收。
 
 本项目依赖官方 QQ Bot 开放平台账号和第三方模型接口；二者的申请、额度、地域和平台规则由对应服务商决定。
 

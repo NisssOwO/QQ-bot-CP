@@ -23,7 +23,7 @@ try {
   if ($LASTEXITCODE) { throw 'javac failed' }
   & "$bt\aapt2.exe" compile --dir "$x\mock-apk\app\src\main\res" -o $res
   if ($LASTEXITCODE) { throw 'aapt compile failed' }
-  & "$bt\aapt2.exe" link -o "$apkDir\base.apk" --manifest "$x\mock-apk\app\src\main\AndroidManifest.xml" -I "$x\tools\sdk\platforms\android-35\android.jar" -R $res --auto-add-overlay --min-sdk-version 26 --target-sdk-version 35 --version-code 16 --version-name 0.2.5 --debug-mode
+  & "$bt\aapt2.exe" link -o "$apkDir\base.apk" --manifest "$x\mock-apk\app\src\main\AndroidManifest.xml" -I "$x\tools\sdk\platforms\android-35\android.jar" -R $res --auto-add-overlay --min-sdk-version 26 --target-sdk-version 35 --version-code 18 --version-name 0.2.7 --debug-mode
   if ($LASTEXITCODE) { throw 'aapt link failed' }
   $assetStaging = "$xOut\asset-staging"
   New-Item -ItemType Directory -Force "$assetStaging\assets" | Out-Null

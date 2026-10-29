@@ -1,6 +1,6 @@
-# Official Bot Mock APK
+# QQ-bot-CP Android APK
 
-This is the first Android host skeleton. It does not contain QQ credentials, does not connect to QQ, and does not call an LLM. It only validates the foreground-service lifecycle and the Control UI boundary.
+This Android host runs the bundled arm64 Node Runtime and DSH official QQ Bot profile through a foreground service. Credentials are stored with Android Keystore and are not included in the repository.
 
 Build requirements:
 
@@ -10,4 +10,4 @@ Build requirements:
 
 From PowerShell, build with `..\build-mock-apk.ps1`; it sets all F-drive tool paths automatically.
 
-The next implementation step is replacing the in-process mock state with the localhost API from `../RUNTIME-DESIGN.md`, then adding Keystore-backed credential storage.
+The manual APK script also packages the current runtime closure. The generated APK is intentionally excluded from Git and should be uploaded as a GitHub Release asset.

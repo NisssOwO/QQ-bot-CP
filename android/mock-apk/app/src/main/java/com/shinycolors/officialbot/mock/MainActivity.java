@@ -12,6 +12,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import org.json.JSONObject;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public final class MainActivity extends Activity {
     private WebView web;
@@ -132,7 +135,20 @@ public final class MainActivity extends Activity {
                     .putString("privateRole", privateRole == null ? "" : privateRole)
                     .putString("groupRole", groupRole == null ? "" : groupRole)
                     .commit();
-            return true;
+            try {
+                CredentialStore credentials = new CredentialStore(MainActivity.this);
+                String appId = credentials.has("qqbotAppId") ? credentials.read("qqbotAppId") : "";
+                if (appId.isEmpty()) return false;
+                File file = new File(getFilesDir(), "runtime/.dsh-qqbot/model-prefs.json");
+                JSONObject data = file.isFile() ? new JSONObject(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)) : new JSONObject();
+                JSONObject presets = data.optJSONObject("presets");
+                if (presets == null) { presets = new JSONObject(); data.put("presets", presets); }
+                presets.put("qqbot:" + appId + ":private:*", privateRole == null ? "" : privateRole);
+                presets.put("qqbot:" + appId + ":group:*", groupRole == null ? "" : groupRole);
+                file.getParentFile().mkdirs();
+                Files.write(file.toPath(), (data.toString(2) + "\n").getBytes(StandardCharsets.UTF_8));
+                return true;
+            } catch (Exception error) { return false; }
         }
 
         @JavascriptInterface public void copy(String value) {

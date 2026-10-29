@@ -33,7 +33,8 @@ final class RuntimeProcessController {
         env.put("LD_LIBRARY_PATH", context.getApplicationInfo().nativeLibraryDir);
         process = builder.start();
         context.getSharedPreferences(BotRuntimeService.PREFS, Context.MODE_PRIVATE)
-                .edit().putBoolean("runtimeProcessAlive", true).putBoolean("running", true).apply();
+                .edit().remove("runtimeLastError").remove("runtimeStartError").remove("runtimeInstallError")
+                .remove("runtimeExitCode").putBoolean("runtimeProcessAlive", true).putBoolean("running", true).apply();
         Thread watcher = new Thread(() -> {
             try (java.io.BufferedReader errors = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()))) {
                 String line;

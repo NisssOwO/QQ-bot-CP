@@ -26,7 +26,7 @@ if (Test-Path $sourceDeepseek) {
   New-Item -ItemType Directory -Force $targetDeepseek | Out-Null
   Copy-Item (Join-Path $sourceDeepseek '*') $targetDeepseek -Recurse -Force
 }
-$extraPackages = @('@opentelemetry/sdk-logs', '@opentelemetry/api-logs', '@opentelemetry/core', '@opentelemetry/resources', '@earendil-works/pi-ai', '@earendil-works/pi-telemetry', '@joplin/turndown-plugin-gfm', '@mixmark-io/domino', 'diff', 'ipaddr.js', 'turndown', 'eventsource-parser', 'execa', 'yocto-queue', 'is-plain-obj')
+$extraPackages = @('@opentelemetry/sdk-logs', '@opentelemetry/api-logs', '@opentelemetry/core', '@opentelemetry/resources', '@earendil-works/pi-ai', '@earendil-works/pi-telemetry', '@joplin/turndown-plugin-gfm', '@mixmark-io/domino', 'got', 'diff', 'ipaddr.js', 'turndown', 'eventsource-parser', 'execa', 'yocto-queue', 'is-plain-obj')
 foreach ($packageName in $extraPackages) {
   $sourcePackage = Join-Path $env:SHINY_RUNTIME_SOURCE $packageName
   $targetPackage = Join-Path $assets "node_modules\$packageName"
@@ -47,6 +47,12 @@ foreach ($nestedRoot in $nestedOtelRoots) {
     Copy-Item $sourceSdkLogs (Join-Path $nestedRoot 'sdk-logs') -Recurse -Force
   }
 }
+$sourceGot = Join-Path $env:SHINY_RUNTIME_SOURCE 'got'
+$nestedGot = Join-Path $assets 'node_modules\@deepseek-ai\dsh-base\node_modules\got'
+if (Test-Path $sourceGot) {
+  New-Item -ItemType Directory -Force (Split-Path $nestedGot) | Out-Null
+  Copy-Item $sourceGot $nestedGot -Recurse -Force
+}
 $piCompletions = Join-Path $assets 'node_modules\@earendil-works\pi-ai\dist\api\openai-completions.js'
 if (Test-Path $piCompletions) {
   $piText = Get-Content $piCompletions -Raw
@@ -56,6 +62,17 @@ if (Test-Path $piCompletions) {
   $replacement = $needle + "`n    if (model.provider === 'relay') {`n        params.enable_thinking = false;`n    }"
   $piText = $piText.Replace($needle, $replacement)
   Set-Content $piCompletions $piText -Encoding UTF8
+}
+$prefsStore = Join-Path $assets 'node_modules\@tencent-connect\dsh-qqbot\dist\model\prefs-store.js'
+if (Test-Path $prefsStore) {
+  $prefsText = Get-Content $prefsStore -Raw
+  $prefsReplacement = @'
+getPreset(sessionKey) {
+        return this.presets.get(sessionKey) ?? this.presets.get(String(sessionKey).replace(/:[^:]+$/, ":*"));
+    }
+'@
+  $prefsText = [regex]::Replace($prefsText, 'getPreset\(sessionKey\) \{\s*return this\.presets\.get\(sessionKey\);\s*\}', $prefsReplacement)
+  Set-Content $prefsStore $prefsText -Encoding UTF8
 }
 $flockShim = Join-Path $assets 'node_modules\@deepseek-ai\node-addon-system\lib\flock.js'
 if (Test-Path $flockShim) {
@@ -104,6 +121,10 @@ Copy-Item (Join-Path (Split-Path $root -Parent) 'plugins\role-presets\index.js')
 New-Item -ItemType Directory -Force (Join-Path $assets '.dsh-home\profiles\qqbot') | Out-Null
 Copy-Item (Join-Path (Split-Path $root -Parent) '.dsh-home\profiles\qqbot\package.json') (Join-Path $assets '.dsh-home\profiles\qqbot\package.json') -Force
 Copy-Item (Join-Path (Split-Path $root -Parent) '.dsh-home\profiles\qqbot\cordis.yml') (Join-Path $assets '.dsh-home\profiles\qqbot\cordis.yml') -Force
+$profileRoleRoot = Join-Path $assets '.dsh-home\profiles\qqbot\node_modules\@shiny-colors\role-presets'
+New-Item -ItemType Directory -Force $profileRoleRoot | Out-Null
+Copy-Item (Join-Path (Split-Path $root -Parent) 'plugins\role-presets\package.json') (Join-Path $profileRoleRoot 'package.json') -Force
+Copy-Item (Join-Path (Split-Path $root -Parent) 'plugins\role-presets\index.js') (Join-Path $profileRoleRoot 'index.js') -Force
 $patch = Get-Content (Join-Path (Split-Path $root -Parent) '.dsh-home\profiles\qqbot\cordis.patch.yml') -Raw
 $patch = $patch -replace 'F:/产出/official-bot-migration/presets', './presets'
 $patch = $patch -replace '            maxTokens: 8192', "            maxTokens: 8192`n            reasoning: true`n            compat:`n              thinkingFormat: qwen"
