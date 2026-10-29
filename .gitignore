@@ -1,0 +1,55 @@
+# Runtime and local state
+node_modules/
+.npm-cache/
+.dsh-home/
+.tmp-*/
+*.log
+*.session
+.dsh-sessions/
+.env
+.env.*
+!.env.example
+.local-secrets/
+
+# Private role cards and generated role data
+presets/
+ROLE-MAP.md
+cordis.nanoka-direct-prompt.patch.yml
+cordis.patch.example.yml
+cordis.relay.patch.yml
+android/mock-apk/app/src/main/assets/runtime/presets/
+android/mock-apk/app/src/main/assets/runtime/user-presets/
+android/mock-apk/app/src/main/assets/runtime/runtime-missing-dependencies.txt
+
+# Local Android toolchains, generated builds, APKs and device artifacts
+android/tools/
+android/signing/
+android/**/local.properties
+android/**/.gradle/
+android/**/build/
+android/manual-build-next/
+android/role-ui*.png
+android/*.png
+android/.gradle-home/
+android/.android/
+android/runtime-deps/node_modules/
+
+# Local test/debug artifacts
+android/logcat.txt
+android/.gradle-home*/
+android/.android*/
+android/runtime-deps/node_modules/
+
+android/gradle-cache-*/
+android/**/caches/
+
+android/manual-build/
+android/mock-apk/app/src/main/assets/runtime/bin/
+android/native/dsh-node-addon-require-builtin/
+android-ui-*.png
+
+android/manual-classes*/
+android/gradle-cache*/
+
+
+device-migration-backup-*/

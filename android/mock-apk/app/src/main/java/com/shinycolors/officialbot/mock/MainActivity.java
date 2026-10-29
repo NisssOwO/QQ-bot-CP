@@ -1,0 +1,214 @@
+package com.shinycolors.officialbot.mock;
+
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import org.json.JSONObject;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+
+public final class MainActivity extends Activity {
+    private WebView web;
+
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        web = new WebView(this);
+        WebSettings settings = web.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        web.setBackgroundColor(0xff111522);
+        web.setWebViewClient(new WebViewClient());
+        web.addJavascriptInterface(new UiBridge(), "AndroidBridge");
+        setContentView(web);
+        web.loadUrl("file:///android_asset/ui/index.html");
+        CredentialStore store = new CredentialStore(this);
+        if (store.has("qqbotAppId") && store.has("qqbotSecret") && store.has("llmApiKey")) {
+            new Handler(Looper.getMainLooper()).postDelayed(() ->
+                    startForegroundService(new Intent(MainActivity.this, BotRuntimeService.class)), 350L);
+        }
+    }
+
+    private final class UiBridge {
+        @JavascriptInterface public String state() {
+            android.content.SharedPreferences p = getSharedPreferences(BotRuntimeService.PREFS, MODE_PRIVATE);
+            try {
+                JSONObject out = new JSONObject();
+                out.put("running", p.getBoolean("runtimeProcessAlive", false));
+                out.put("restarting", p.getBoolean("runtimeRestarting", false));
+                out.put("port", p.getInt("port", 0));
+                out.put("token", p.getString("token", ""));
+                out.put("lastOutput", p.getString("runtimeLastOutput", ""));
+                out.put("lastError", p.getString("runtimeLastError", ""));
+                out.put("warnings", p.getString("runtimeWarnings", ""));
+                out.put("runtimeExitCode", p.getInt("runtimeExitCode", -1));
+                out.put("assetVersion", p.getString("assetVersion", ""));
+                return out.toString();
+            } catch (Exception error) { return "{}"; }
+        }
+
+        @JavascriptInterface public String config() {
+            android.content.SharedPreferences p = getSharedPreferences("public-config", MODE_PRIVATE);
+            CredentialStore store = new CredentialStore(MainActivity.this);
+            try {
+                JSONObject out = new JSONObject();
+                out.put("appId", store.has("qqbotAppId") ? store.read("qqbotAppId") : "");
+                out.put("qqbotConfigured", store.has("qqbotAppId") && store.has("qqbotSecret"));
+                out.put("llmConfigured", store.has("llmApiKey"));
+                out.put("provider", p.getString("provider", "relay"));
+                out.put("model", p.getString("model", ""));
+                out.put("baseUrl", p.getString("baseUrl", ""));
+                String defaultRole = p.getString("defaultRole", "");
+                out.put("activeRole", defaultRole);
+                out.put("privateRole", readScopedRole("private", defaultRole));
+                out.put("groupRole", readScopedRole("group", defaultRole));
+                return out.toString();
+            } catch (Exception error) { return "{}"; }
+        }
+
+        private String readScopedRole(String scope, String fallback) {
+            try {
+                CredentialStore credentials = new CredentialStore(MainActivity.this);
+                String appId = credentials.has("qqbotAppId") ? credentials.read("qqbotAppId") : "";
+                File file = new File(getFilesDir(), "runtime/.dsh-qqbot/model-prefs.json");
+                if (!file.isFile()) return fallback;
+                JSONObject data = new JSONObject(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+                JSONObject presets = data.optJSONObject("presets");
+                if (presets == null) return fallback;
+                String[] keys = {
+                        "qqbot:" + appId + ":" + scope + ":*",
+                        "qqbot:*:" + scope + ":*",
+                        "qqbot:" + scope + ":*"
+                };
+                for (String key : keys) {
+                    String value = presets.optString(key, "").trim();
+                    if (!value.isEmpty()) return value;
+                }
+                // The UI has no single peer selected. If /preset was applied
+                // to an exact peer, show the newest matching scope as a
+                // useful overview hint instead of hiding the active role.
+                java.util.Iterator<String> names = presets.keys();
+                String marker = ":" + scope + ":";
+                while (names.hasNext()) {
+                    String key = names.next();
+                    if (key.contains(marker)) {
+                        String value = presets.optString(key, "").trim();
+                        if (!value.isEmpty()) return value;
+                    }
+                }
+            } catch (Exception ignored) { }
+            return fallback;
+        }
+
+        @JavascriptInterface public void start() { runOnUiThread(() -> startForegroundService(new Intent(MainActivity.this, BotRuntimeService.class))); }
+        @JavascriptInterface public void stop() { runOnUiThread(() -> stopService(new Intent(MainActivity.this, BotRuntimeService.class))); }
+        @JavascriptInterface public void restart() {
+            runOnUiThread(() -> {
+                Intent intent = new Intent(MainActivity.this, BotRuntimeService.class);
+                getSharedPreferences(BotRuntimeService.PREFS, MODE_PRIVATE).edit().putBoolean("runtimeRestarting", true).apply();
+                stopService(intent);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> startForegroundService(intent), 2200L);
+            });
+        }
+
+        @JavascriptInterface public boolean saveConfig(String raw) {
+            try {
+                JSONObject input = new JSONObject(raw);
+                CredentialStore store = new CredentialStore(MainActivity.this);
+                if (input.optString("appId").trim().length() > 0) store.save("qqbotAppId", input.optString("appId").trim());
+                if (input.optString("secret").length() > 0) store.save("qqbotSecret", input.optString("secret"));
+                if (input.optString("apiKey").length() > 0) store.save("llmApiKey", input.optString("apiKey"));
+                getSharedPreferences("public-config", MODE_PRIVATE).edit()
+                        .putString("provider", input.optString("provider", "relay"))
+                        .putString("model", input.optString("model", ""))
+                        .putString("baseUrl", input.optString("baseUrl", ""))
+                        .apply();
+                return true;
+            } catch (Exception error) { return false; }
+        }
+
+        @JavascriptInterface public boolean saveRole(String raw) {
+            try { new RoleCardStore(MainActivity.this).save(new JSONObject(raw)); return true; }
+            catch (Exception error) { return false; }
+        }
+
+        @JavascriptInterface public String roles() {
+            try {
+                org.json.JSONArray out = new org.json.JSONArray();
+                for (JSONObject card : new RoleCardStore(MainActivity.this).list()) {
+                    card.put("builtin", false);
+                    out.put(card);
+                }
+                return out.toString();
+            } catch (Exception error) { return "[]"; }
+        }
+
+        private void addBuiltin(org.json.JSONArray out, String shortId, String name, String aliases, String description) throws Exception {
+            String prompt = "";
+            try (java.io.InputStream input = getAssets().open("runtime/presets/preset." + shortId + ".md")) {
+                java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[4096]; int count;
+                while ((count = input.read(buffer)) >= 0) bytes.write(buffer, 0, count);
+                prompt = new String(bytes.toByteArray(), StandardCharsets.UTF_8);
+                int marker = prompt.indexOf("---", 3);
+                if (marker >= 0) prompt = prompt.substring(marker + 3).trim();
+            } catch (Exception ignored) { }
+            if (prompt.trim().isEmpty()) return;
+            JSONObject card = new JSONObject();
+            card.put("id", "shiny-colors." + shortId); card.put("displayName", name); card.put("description", description); card.put("prompt", prompt);
+            card.put("aliases", new org.json.JSONArray(aliases.split(","))); card.put("builtin", true);
+            out.put(card);
+        }
+
+        @JavascriptInterface public boolean deleteRole(String id) {
+            return id != null && new RoleCardStore(MainActivity.this).delete(id);
+        }
+
+        @JavascriptInterface public boolean saveRoleScope(String privateRole, String groupRole) {
+            getSharedPreferences("public-config", MODE_PRIVATE).edit()
+                    .putString("privateRole", privateRole == null ? "" : privateRole)
+                    .putString("groupRole", groupRole == null ? "" : groupRole)
+                    .commit();
+            try {
+                CredentialStore credentials = new CredentialStore(MainActivity.this);
+                String appId = credentials.has("qqbotAppId") ? credentials.read("qqbotAppId") : "";
+                if (appId.isEmpty()) return false;
+                File file = new File(getFilesDir(), "runtime/.dsh-qqbot/model-prefs.json");
+                JSONObject data = file.isFile() ? new JSONObject(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)) : new JSONObject();
+                JSONObject presets = data.optJSONObject("presets");
+                if (presets == null) { presets = new JSONObject(); data.put("presets", presets); }
+                presets.put("qqbot:" + appId + ":private:*", privateRole == null ? "" : privateRole);
+                presets.put("qqbot:" + appId + ":group:*", groupRole == null ? "" : groupRole);
+                presets.put("qqbot:*:private:*", privateRole == null ? "" : privateRole);
+                presets.put("qqbot:*:group:*", groupRole == null ? "" : groupRole);
+                presets.put("qqbot:private:*", privateRole == null ? "" : privateRole);
+                presets.put("qqbot:group:*", groupRole == null ? "" : groupRole);
+                file.getParentFile().mkdirs();
+                Files.write(file.toPath(), (data.toString(2) + "\n").getBytes(StandardCharsets.UTF_8));
+                return true;
+            } catch (Exception error) { return false; }
+        }
+
+        @JavascriptInterface public void copy(String value) {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("QQ 会话指令", value));
+        }
+
+        @JavascriptInterface public String checkUpdate() { return UpdateChecker.check(); }
+
+        @JavascriptInterface public void openRelease(String url) {
+            UpdateChecker.openRelease(MainActivity.this, url);
+        }
+    }
+}
+

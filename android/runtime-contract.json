@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "bindAddress": "127.0.0.1",
+  "auth": "per-install-random-bearer-token",
+  "service": "foreground",
+  "requiredEndpoints": [
+    "GET /v1/status",
+    "POST /v1/runtime/start",
+    "POST /v1/runtime/stop",
+    "GET /v1/config/public",
+    "PUT /v1/config/public",
+    "GET /v1/roles",
+    "POST /v1/session/new",
+    "GET /v1/logs",
+    "GET /v1/events"
+  ],
+  "secretStorage": "android-keystore",
+  "qqTransport": "official-bot-websocket"
+}

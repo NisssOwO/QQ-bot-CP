@@ -1,0 +1,7 @@
+{
+  "format": "dpapi-v2",
+  "appId": "",
+  "provider": "relay",
+  "model": "deepseek-chat",
+  "baseUrl": ""
+}
