@@ -49,6 +49,7 @@ public final class MainActivity extends Activity {
                 out.put("token", p.getString("token", ""));
                 out.put("lastOutput", p.getString("runtimeLastOutput", ""));
                 out.put("lastError", p.getString("runtimeLastError", ""));
+                out.put("runtimeExitCode", p.getInt("runtimeExitCode", -1));
                 out.put("assetVersion", p.getString("assetVersion", ""));
                 return out.toString();
             } catch (Exception error) { return "{}"; }

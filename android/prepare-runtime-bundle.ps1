@@ -26,7 +26,7 @@ if (Test-Path $sourceDeepseek) {
   New-Item -ItemType Directory -Force $targetDeepseek | Out-Null
   Copy-Item (Join-Path $sourceDeepseek '*') $targetDeepseek -Recurse -Force
 }
-$extraPackages = @('@opentelemetry/sdk-logs', '@opentelemetry/api-logs', '@opentelemetry/core', '@opentelemetry/resources', '@earendil-works/pi-ai', '@earendil-works/pi-telemetry', '@joplin/turndown-plugin-gfm', '@mixmark-io/domino', 'got', 'diff', 'ipaddr.js', 'turndown', 'eventsource-parser', 'execa', 'yocto-queue', 'is-plain-obj')
+$extraPackages = @('@opentelemetry/sdk-logs', '@opentelemetry/api-logs', '@opentelemetry/core', '@opentelemetry/resources', '@earendil-works/pi-ai', '@earendil-works/pi-telemetry', '@joplin/turndown-plugin-gfm', '@mixmark-io/domino', 'diff', 'ipaddr.js', 'turndown', 'eventsource-parser', 'execa', 'yocto-queue', 'is-plain-obj')
 foreach ($packageName in $extraPackages) {
   $sourcePackage = Join-Path $env:SHINY_RUNTIME_SOURCE $packageName
   $targetPackage = Join-Path $assets "node_modules\$packageName"
@@ -46,12 +46,6 @@ foreach ($nestedRoot in $nestedOtelRoots) {
     New-Item -ItemType Directory -Force $nestedRoot | Out-Null
     Copy-Item $sourceSdkLogs (Join-Path $nestedRoot 'sdk-logs') -Recurse -Force
   }
-}
-$sourceGot = Join-Path $env:SHINY_RUNTIME_SOURCE 'got'
-$nestedGot = Join-Path $assets 'node_modules\@deepseek-ai\dsh-base\node_modules\got'
-if (Test-Path $sourceGot) {
-  New-Item -ItemType Directory -Force (Split-Path $nestedGot) | Out-Null
-  Copy-Item $sourceGot $nestedGot -Recurse -Force
 }
 $piCompletions = Join-Path $assets 'node_modules\@earendil-works\pi-ai\dist\api\openai-completions.js'
 if (Test-Path $piCompletions) {
