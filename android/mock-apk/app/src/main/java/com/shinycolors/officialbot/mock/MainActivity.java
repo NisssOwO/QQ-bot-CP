@@ -159,6 +159,10 @@ public final class MainActivity extends Activity {
                 if (presets == null) { presets = new JSONObject(); data.put("presets", presets); }
                 presets.put("qqbot:" + appId + ":private:*", privateRole == null ? "" : privateRole);
                 presets.put("qqbot:" + appId + ":group:*", groupRole == null ? "" : groupRole);
+                presets.put("qqbot:*:private:*", privateRole == null ? "" : privateRole);
+                presets.put("qqbot:*:group:*", groupRole == null ? "" : groupRole);
+                presets.put("qqbot:private:*", privateRole == null ? "" : privateRole);
+                presets.put("qqbot:group:*", groupRole == null ? "" : groupRole);
                 file.getParentFile().mkdirs();
                 Files.write(file.toPath(), (data.toString(2) + "\n").getBytes(StandardCharsets.UTF_8));
                 return true;

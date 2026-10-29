@@ -11,14 +11,12 @@ final class RuntimeAssetInstaller {
 
     static File install(Context context) throws IOException {
         File target = new File(context.getFilesDir(), "runtime");
-        String version = "node26-bundle-v32";
+        String version = "node26-bundle-v35";
         if (!version.equals(context.getSharedPreferences("runtime", Context.MODE_PRIVATE).getString("assetVersion", ""))) {
             context.getSharedPreferences("runtime", Context.MODE_PRIVATE).edit().putString("assetVersion", version).remove("runtimeInstallError").apply();
         }
         copyTree(context, "runtime", target);
         // Update patched runtime code without deleting user presets and per-peer settings.
-        copyFile(context, "runtime/node_modules/@tencent-connect/dsh-qqbot/dist/model/prefs-store.js",
-                new File(target, "node_modules/@tencent-connect/dsh-qqbot/dist/model/prefs-store.js"), true);
         File sessionManager = new File(target, "node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js");
         sessionManager.delete();
         copyFile(context, "runtime/node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js", sessionManager);

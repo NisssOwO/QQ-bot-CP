@@ -69,7 +69,19 @@ if (Test-Path $prefsStore) {
   $prefsText = Get-Content $prefsStore -Raw
   $prefsReplacement = @'
 getPreset(sessionKey) {
-        return this.presets.get(sessionKey) ?? this.presets.get(String(sessionKey).replace(/:[^:]+$/, ":*"));
+        const raw = String(sessionKey);
+        const direct = this.presets.get(raw);
+        if (direct) return direct;
+        const parts = raw.split(":");
+        if (parts.length >= 4) {
+            const scoped = this.presets.get(`${parts.slice(0, 3).join(":")}:*`);
+            if (scoped) return scoped;
+            const kind = parts[2];
+            for (const [key, value] of this.presets) {
+                if (key.endsWith(`:${kind}:*`) || key === `qqbot:${kind}:*`) return value;
+            }
+        }
+        return undefined;
     }
 '@
   $prefsText = [regex]::Replace($prefsText, 'getPreset\(sessionKey\) \{\s*return this\.presets\.get\(sessionKey\);\s*\}', $prefsReplacement)
