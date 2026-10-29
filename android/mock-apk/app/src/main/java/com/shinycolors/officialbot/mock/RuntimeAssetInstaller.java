@@ -11,12 +11,16 @@ final class RuntimeAssetInstaller {
 
     static File install(Context context) throws IOException {
         File target = new File(context.getFilesDir(), "runtime");
-        String version = "node26-bundle-v26";
+        String version = "node26-bundle-v28";
         if (!version.equals(context.getSharedPreferences("runtime", Context.MODE_PRIVATE).getString("assetVersion", ""))) {
-            deleteTree(target);
             context.getSharedPreferences("runtime", Context.MODE_PRIVATE).edit().putString("assetVersion", version).remove("runtimeInstallError").apply();
         }
         copyTree(context, "runtime", target);
+        // Update patched runtime code without deleting user presets and per-peer settings.
+        copyFile(context, "runtime/node_modules/@tencent-connect/dsh-qqbot/dist/model/prefs-store.js",
+                new File(target, "node_modules/@tencent-connect/dsh-qqbot/dist/model/prefs-store.js"), true);
+        copyFile(context, "runtime/node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js",
+                new File(target, "node_modules/@tencent-connect/dsh-qqbot/dist/session/session-manager.js"), true);
         File node = new File(target, "bin/node");
         node.setExecutable(true, false);
         File execDir = context.getCodeCacheDir();
@@ -46,7 +50,11 @@ final class RuntimeAssetInstaller {
     }
 
     private static void copyFile(Context context, String assetPath, File target) throws IOException {
-        if (target.exists() && target.length() > 0) return;
+        copyFile(context, assetPath, target, false);
+    }
+
+    private static void copyFile(Context context, String assetPath, File target, boolean force) throws IOException {
+        if (!force && target.exists() && target.length() > 0) return;
         File parent = target.getParentFile();
         if (parent != null && !parent.exists() && !parent.mkdirs()) throw new IOException("cannot create " + parent);
         try (InputStream input = context.getAssets().open(assetPath); FileOutputStream output = new FileOutputStream(target)) {

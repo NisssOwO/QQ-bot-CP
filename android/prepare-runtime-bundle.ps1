@@ -75,6 +75,30 @@ getPreset(sessionKey) {
   $prefsText = [regex]::Replace($prefsText, 'getPreset\(sessionKey\) \{\s*return this\.presets\.get\(sessionKey\);\s*\}', $prefsReplacement)
   Set-Content $prefsStore $prefsText -Encoding UTF8
 }
+$sessionManager = Join-Path $assets 'node_modules\@tencent-connect\dsh-qqbot\dist\session\session-manager.js'
+if (Test-Path $sessionManager) {
+  $sessionText = Get-Content $sessionManager -Raw
+  $oldSession = @'
+        const sessionId = SessionId(this.currentSessionId(key));
+        this.logger.info(`getOrCreate: key=${key} route=${route ? `${route.provider}/${route.model}` : 'host-default'} sessionId=${sessionId}`);
+'@
+  $newSession = @'
+        let sessionId = SessionId(this.currentSessionId(key));
+        const overridePreset = this.modelResolver.getPreset(key);
+        const persistedPreset = await this.resolvePersistedPreset(sessionId);
+        if (overridePreset && persistedPreset && overridePreset !== persistedPreset) {
+            this.modelResolver.setSessionId(key, randomUUID());
+            sessionId = SessionId(this.currentSessionId(key));
+            this.logger.info(`preset changed: key=${key} ${persistedPreset} → ${overridePreset}; starting a fresh session`);
+        }
+        this.logger.info(`getOrCreate: key=${key} route=${route ? `${route.provider}/${route.model}` : 'host-default'} sessionId=${sessionId}`);
+'@
+  $sessionText = $sessionText.Replace($oldSession, $newSession)
+  $sessionText = $sessionText.Replace(
+    '            const presetId = (await this.resolvePersistedPreset(sessionId)) ?? this.getEffectivePresetByKey(key);',
+    '            const presetId = overridePreset ?? persistedPreset ?? this.getEffectivePresetByKey(key);')
+  Set-Content $sessionManager $sessionText -Encoding UTF8
+}
 $flockShim = Join-Path $assets 'node_modules\@deepseek-ai\node-addon-system\lib\flock.js'
 if (Test-Path $flockShim) {
   @'
